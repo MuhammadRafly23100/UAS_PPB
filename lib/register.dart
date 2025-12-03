@@ -51,7 +51,7 @@ class _RegisterPageState extends State<RegisterPage> {
               height: 100,
               width: 100,
               child: Image.asset(
-                'assets/image/logo.png',
+                'assets/images/logo.png',
                 width: double.infinity,
                 fit: BoxFit.contain,
               ),

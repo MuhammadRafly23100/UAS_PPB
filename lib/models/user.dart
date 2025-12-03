@@ -37,6 +37,21 @@ class User{
     return res.isNotEmpty ? res.first : null;
   }
 
+  Future<int> updateTransactionCount(int userId, int count) async {
+    final db = await _dbHelper.database;
+    try {
+      return await db.update(
+        'users',
+        {'transaction_count': count},
+        where: 'user_id = ?',
+        whereArgs: [userId],
+      );
+    } catch (e) {
+      print('Failed to update transaction count: $e');
+      return -1;
+    }
+  }
+
   Future<int> updatePassword(String email, String newPassword) async {
     final db = await _dbHelper.database;
     try {

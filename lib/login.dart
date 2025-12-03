@@ -23,9 +23,9 @@ class _LoginPageState extends State<LoginPage> {
 
   int _currentIndex = 0;
   final List<String> _images = [
-    'assets/image/hiasan_dinding.jpg',
-    'assets/image/kursi.jpeg',
-    'assets/image/vas_bunga.jpg',
+    'assets/images/hiasan_dinding.jpg',
+    'assets/images/kursi.jpeg',
+    'assets/images/vas_bunga.jpg',
   ];
 
   final User _user = User();
@@ -180,7 +180,8 @@ class _LoginPageState extends State<LoginPage> {
                     _showDialog('Oops!', 'Email or password is incorrect. Please check again.');
                   } else {
                     await SessionManager.setLogin(true);
-                    await SessionManager.setEmail(email); 
+                    await SessionManager.setEmail(email);
+                    await SessionManager.setUserId(user['user_id']); // Set user_id in SessionManager
 
                     _showDialog('Success', 'You have successfully logged in, ${user['nama']}!');
 
@@ -217,7 +218,7 @@ class _LoginPageState extends State<LoginPage> {
               height: 80,
               width: 80,
               child: Image.asset(
-                'assets/image/logo.png',
+                'assets/images/logo.png',
                 width: double.infinity,
                 fit: BoxFit.contain,
               ),

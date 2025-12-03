@@ -6,7 +6,9 @@ import 'profile.dart';
 import 'search.dart';
 import 'cart.dart';
 import 'dart:io';
-import 'session_manager.dart'; 
+import 'session_manager.dart';
+import 'product_detail_page.dart'; // Import the new product detail page
+import 'category_products_page.dart'; // Import the category products page
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,24 +24,7 @@ class _HomePageState extends State<HomePage> {
   final Kategori _kategori = Kategori();
 
   List<Map<String, dynamic>> categories = [];
-
-  final List<Map<String, String>> featuredItems = [
-    {
-      'gambar': 'assets/image/vas_bunga.jpg',
-      'name': 'Vas Bunga',
-      'description': 'Cantik untuk dekorasi rumah'
-    },
-    {
-      'gambar': 'assets/image/hiasan_dinding.jpg',
-      'name': 'Hiasan Dinding',
-      'description': 'Tambahkan sentuhan artistik'
-    },
-    {
-      'gambar': 'assets/image/kursi.jpeg',
-      'name': 'Kursi Kayu',
-      'description': 'Nyaman dan elegan'
-    },
-  ];
+  List<Map<String, dynamic>> featuredProducts = [];
 
   final List<Map<String, dynamic>> testimonials = [
     {"name": "Aulia", "rating": 5, "comment": "Kualitas produk sangat bagus! Pengiriman cepat."},
@@ -52,6 +37,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     checkSession();
     loadCategories();
+    loadFeaturedProducts();
   }
 
   Future<void> checkSession() async {
@@ -71,7 +57,7 @@ class _HomePageState extends State<HomePage> {
             'kategori_id': cat['kategori_id'],
             'kategori': cat['kategori'],
             'gambar': (cat['gambar'] == null || cat['gambar'].toString().isEmpty)
-                ? 'assets/image/lainnya.jpg'
+                ? 'assets/images/lainnya.jpg'
                 : cat['gambar'].toString(),
           };
         }).toList();
@@ -81,15 +67,39 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget buildCategoryImage(String path) {
+  Future<void> loadFeaturedProducts() async {
+    try {
+      final products = await _produk.getLatestProduk(3);
+      if (!mounted) return;
+      setState(() {
+        featuredProducts = products;
+      });
+    } catch (e) {
+      setState(() => featuredProducts = []);
+    }
+  }
+
+  Widget buildImage(String path, {double? width, double? height}) {
+    Widget imageWidget;
     if (path.startsWith('assets/')) {
-      return Image.asset(path, fit: BoxFit.cover);
+      imageWidget = Image.asset(path, fit: BoxFit.cover);
+    } else {
+      final file = File(path);
+      if (file.existsSync()) {
+        imageWidget = Image.file(file, fit: BoxFit.cover);
+      } else {
+        imageWidget = Image.asset('assets/images/lainnya.jpg', fit: BoxFit.cover);
+      }
     }
-    final file = File(path);
-    if (file.existsSync()) {
-      return Image.file(file, fit: BoxFit.cover);
-    }
-    return Image.asset('assets/image/lainnya.jpg', fit: BoxFit.cover);
+    return SizedBox(
+      width: width,
+      height: height,
+      child: FittedBox(
+        fit: BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: imageWidget,
+      ),
+    );
   }
 
   void _navigateToSearch() {
@@ -186,48 +196,59 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 24),
           const Text('Featured Crafts', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 260,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: featuredItems.length,
-              separatorBuilder: (context, _) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final item = featuredItems[index];
-                return Card(
-                  elevation: 6,
-                  color: Colors.white,
-                  shadowColor: Colors.black.withOpacity(0.22),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: SizedBox(
-                    width: 220,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                          child: Image.asset(
-                            item['gambar']!,
-                            height: 140,
-                            width: 220,
-                            fit: BoxFit.cover,
+          featuredProducts.isEmpty
+              ? const Center(child: Text("Tidak ada produk unggulan ditemukan"))
+              : SizedBox(
+                  height: 280, // Increased height for the ListView to accommodate taller images
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: featuredProducts.length,
+                    separatorBuilder: (context, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final item = featuredProducts[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailPage(productId: item['produk_id']),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 6,
+                          color: Colors.white,
+                          shadowColor: Colors.black.withOpacity(0.22),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          child: SizedBox(
+                            width: 180,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: buildImage(
+                                    item['foto_produk'] ?? 'assets/images/lainnya.jpg',
+                                    height: 180, // Made image square
+                                    width: 180, // Made image square
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
+                                  child: Text(item['nama_produk']!, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                                  child: Text(item['deskripsi']!, style: const TextStyle(fontSize: 14, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis,),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Text(item['name']!, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(item['description']!, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
+                ),
           const SizedBox(height: 28),
           const Text('Categories', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
@@ -247,7 +268,17 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final c = categories[index];
                     return ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CategoryProductsPage(
+                              kategoriId: c['kategori_id'],
+                              kategoriName: c['kategori'],
+                            ),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         elevation: 2,
@@ -261,7 +292,7 @@ class _HomePageState extends State<HomePage> {
                             height: double.infinity,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
-                              child: buildCategoryImage(c['gambar']),
+                              child: buildImage(c['gambar'], width: 40, height: double.infinity),
                             ),
                           ),
                           const SizedBox(width: 8),

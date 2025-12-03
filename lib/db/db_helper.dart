@@ -15,7 +15,7 @@ class DBHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 4, // Increment database version
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users(
@@ -27,6 +27,7 @@ class DBHelper {
             alamat TEXT DEFAULT '',
             role TEXT DEFAULT 'pembeli',
             avatar TEXT,
+            transaction_count INTEGER DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now','localtime'))
           )
         ''');
@@ -35,8 +36,26 @@ class DBHelper {
           CREATE TABLE transaksi(
             transaksi_id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            total INTEGER,
-            tanggal TEXT DEFAULT (datetime('now','localtime'))
+            total REAL,
+            shipping_cost REAL,
+            discount_amount REAL,
+            payment_method TEXT,
+            address TEXT,
+            tanggal TEXT DEFAULT (datetime('now','localtime')),
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE transaksi_detail(
+            transaksi_detail_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transaksi_id INTEGER,
+            produk_id INTEGER,
+            nama_produk TEXT,
+            harga REAL,
+            qty INTEGER,
+            FOREIGN KEY (transaksi_id) REFERENCES transaksi(transaksi_id),
+            FOREIGN KEY (produk_id) REFERENCES produk(produk_id)
           )
         ''');
 
@@ -86,7 +105,82 @@ class DBHelper {
             )
           ''');
         }
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE users ADD COLUMN transaction_count INTEGER DEFAULT 0');
+        }
+        if (oldVersion < 4) {
+          // Recreate transaksi table with new columns
+          await db.execute('DROP TABLE IF EXISTS transaksi');
+          await db.execute('''
+            CREATE TABLE transaksi(
+              transaksi_id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER,
+              total REAL,
+              shipping_cost REAL,
+              discount_amount REAL,
+              payment_method TEXT,
+              address TEXT,
+              tanggal TEXT DEFAULT (datetime('now','localtime')),
+              FOREIGN KEY (user_id) REFERENCES users(user_id)
+            )
+          ''');
+          // Create transaksi_detail table
+          await db.execute('''
+            CREATE TABLE transaksi_detail(
+              transaksi_detail_id INTEGER PRIMARY KEY AUTOINCREMENT,
+              transaksi_id INTEGER,
+              produk_id INTEGER,
+              nama_produk TEXT,
+              harga REAL,
+              qty INTEGER,
+              FOREIGN KEY (transaksi_id) REFERENCES transaksi(transaksi_id),
+              FOREIGN KEY (produk_id) REFERENCES produk(produk_id)
+            )
+          ''');
+        }
       },
     );
+  }
+
+  Future<int> insertTransaction(Map<String, dynamic> transaction) async {
+    final db = await database;
+    return await db.insert('transaksi', transaction);
+  }
+
+  Future<void> insertTransactionDetails(List<Map<String, dynamic>> details) async {
+    final db = await database;
+    for (var detail in details) {
+      await db.insert('transaksi_detail', detail);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTransactionsByUserId(int userId) async {
+    final db = await database;
+    return await db.query(
+      'transaksi',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'tanggal DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getTransactionDetails(int transaksiId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT
+        td.transaksi_detail_id,
+        td.transaksi_id,
+        td.produk_id,
+        td.nama_produk,
+        td.harga,
+        td.qty,
+        p.foto_produk
+      FROM
+        transaksi_detail td
+      JOIN
+        produk p ON td.produk_id = p.produk_id
+      WHERE
+        td.transaksi_id = ?
+    ''', [transaksiId]);
   }
 }

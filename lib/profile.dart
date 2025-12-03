@@ -5,6 +5,8 @@ import 'dart:io';
 import 'logout.dart';
 import 'edit_profile.dart';
 import 'models/user.dart';
+import 'db/db_helper.dart'; // Import DBHelper to get transaction counts
+import 'order_history_page.dart'; // Import OrderHistoryPage
 
 
 class ProfilePage extends StatefulWidget {
@@ -17,26 +19,30 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
   File? _avatarImage;
+  int _pendingShippingCount = 0;
 
   @override
   void initState() {
     super.initState();
-    loadUser();
+    _loadUserDataAndCounts();
   }
 
-  Future<void> loadUser() async {
+  Future<void> _loadUserDataAndCounts() async {
     final prefs = await SharedPreferences.getInstance();
     String? emailPref = prefs.getString("email");
     if (emailPref == null) return;
 
     final User _user = User();
     final data = await _user.getUserByEmail(emailPref);
+    final pendingCount = await _user.getPendingShippingCount(); // Call from _user instance
+
     setState(() {
       userData = data;
       _avatarImage = (userData?['avatar'] != null &&
                 userData!['avatar'].toString().isNotEmpty)
           ? File(userData!['avatar'])
           : null;
+      _pendingShippingCount = pendingCount;
     });
   }
 
@@ -78,6 +84,36 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 20, fontWeight: FontWeight.w600),
                     ),
                   ],
+                ),
+                const SizedBox(height: 30),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Status Pesanan',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2EDE5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatusBox('Riwayat Pesanan', _pendingShippingCount, onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const OrderHistoryPage()),
+                        );
+                      }),
+                      _buildStatusBox('Pembatalan', 0), // Placeholder
+                      _buildStatusBox('Pengembalian', 0), // Placeholder
+                      _buildStatusBox('Rating', 4.7, isRating: true),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 30),
                 fieldLabel("Name"),
@@ -146,6 +182,47 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBox(String title, dynamic value, {bool isRating = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF8D6E63)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            isRating
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 20),
+                      Text(
+                        value.toString(),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  )
+                : Text(
+                    value.toString(),
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+            const SizedBox(height: 5),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }

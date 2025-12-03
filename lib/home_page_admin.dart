@@ -19,17 +19,17 @@ class _HomePageAdminState extends State<HomePageAdmin> {
 
   final List<Map<String, String>> featuredItems = [
     {
-      'image': 'assets/image/vas_bunga.jpg',
+      'image': 'assets/images/vas_bunga.jpg',
       'name': 'Vas Bunga',
       'description': 'Cantik untuk dekorasi rumah',
     },
     {
-      'image': 'assets/image/hiasan_dinding.jpg',
+      'image': 'assets/images/hiasan_dinding.jpg',
       'name': 'Hiasan Dinding',
       'description': 'Tambahkan sentuhan artistik',
     },
     {
-      'image': 'assets/image/kursi.jpeg',
+      'image': 'assets/images/kursi.jpeg',
       'name': 'Kursi Kayu',
       'description': 'Nyaman dan elegan',
     },

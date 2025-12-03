@@ -28,7 +28,7 @@ class _launchScreenState extends State<LaunchScreen> {
       backgroundColor: const Color(0xFFF7F5F2),
       body: Center(
         child: Image.asset(
-          'assets/image/logo.png',
+          'assets/images/logo.png',
           width: 160,
           height: 160,
         ),

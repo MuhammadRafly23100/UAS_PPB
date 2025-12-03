@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:path_provider/path_provider.dart'; // Import path_provider
+import 'package:path/path.dart' as p; // Import path package
 import '../models/kategori.dart';
 import '../models/produk.dart';
 import 'package:flutter/material.dart';
@@ -100,13 +102,21 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
       return;
     }
 
+    String? fotoProdukPath;
+    if (selectedFoto != null) {
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = p.basename(selectedFoto!.path);
+      final savedImage = await selectedFoto!.copy('${appDir.path}/$fileName');
+      fotoProdukPath = savedImage.path;
+    }
+
     Map<String, dynamic> row = {
       'kategori_id': selectedKategoriId,
       'nama_produk': namaController.text,
       'deskripsi': deskripsiController.text,
       'harga': harga,
       'stok': stok,
-      'foto_produk': selectedFoto!.path,
+      'foto_produk': fotoProdukPath,
     };
 
     bool isNew = editingProdukId == null;
