@@ -4,6 +4,7 @@ import 'models/user.dart';
 import 'login.dart';
 import 'profile.dart'; 
 import 'admin/manage.dart';
+import 'session_manager.dart'; // Import SessionManager
 
 class HomePageAdmin extends StatefulWidget {
   const HomePageAdmin({super.key});
@@ -57,7 +58,11 @@ class _HomePageAdminState extends State<HomePageAdmin> {
   Future<void> _loadData() async {
     final User _user = User();
     final users = await _user.getUserCount();
-    final shipments = await _user.getPendingShippingCount();
+    final userId = await SessionManager.getUserId();
+    int shipments = 0;
+    if (userId != null) {
+      shipments = await _user.getPendingShippingCount(userId);
+    }
     setState(() {
       userCount = users;
       shippingCount = shipments;

@@ -34,7 +34,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final User _user = User();
     final data = await _user.getUserByEmail(emailPref);
-    final pendingCount = await _user.getPendingShippingCount(); // Call from _user instance
+    final pendingCount = await _user.getPendingShippingCount(data!['user_id']); // Call from _user instance
 
     setState(() {
       userData = data;

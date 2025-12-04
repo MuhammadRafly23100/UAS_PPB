@@ -4,21 +4,22 @@ import 'models/kategori.dart';
 import 'models/produk.dart';
 import 'profile.dart';
 import 'search.dart';
-import 'cart.dart';
+import 'cart_manager.dart'; // Updated import from cart.dart
 import 'dart:io';
 import 'session_manager.dart';
 import 'product_detail_page.dart'; // Import the new product detail page
 import 'category_products_page.dart'; // Import the category products page
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialIndex;
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final TextEditingController _searchController = TextEditingController();
   final Produk _produk = Produk();
   final Kategori _kategori = Kategori();
@@ -35,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
     checkSession();
     loadCategories();
     loadFeaturedProducts();

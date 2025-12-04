@@ -102,14 +102,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Stock: ${(product!['stok'] as num).toInt()}',
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.grey),
+                        'Stock: ${product!['stok'] as num == 0 ? 'Stok Habis' : (product!['stok'] as num).toInt()}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: product!['stok'] as num == 0
+                              ? Colors.red
+                              : Colors.grey,
+                          fontWeight: product!['stok'] as num == 0
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
                       ),
                     ],
                   ),
                 ),
-      floatingActionButton: product == null
+      floatingActionButton: product == null || (product!['stok'] as num) == 0
           ? null
           : FloatingActionButton.extended(
               onPressed: () {
@@ -118,7 +125,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   'nama_produk': product!['nama_produk'].toString(),
                   'harga': (product!['harga'] as num).toDouble(),
                   'stok': (product!['stok'] as num).toInt(),
-                  'foto_produk': product!['foto_produk']?.toString() ?? 'assets/images/lainnya.jpg', // Ensure a default image is always passed
+                  'foto_produk': product!['foto_produk']?.toString() ??
+                      'assets/images/lainnya.jpg',
                   'deskripsi': product!['deskripsi']?.toString(),
                 };
 
@@ -127,8 +135,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                      content: Text(
-                          '${product!['nama_produk']} added to cart!')),
+                      content:
+                          Text('${product!['nama_produk']} added to cart!')),
                 );
               },
               icon: const Icon(Icons.shopping_cart),

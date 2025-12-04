@@ -104,9 +104,9 @@ class User{
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  Future<int> getPendingShippingCount() async {
+  Future<int> getPendingShippingCount(int userId) async {
     final db = await _dbHelper.database;
-    final result = await db.rawQuery('SELECT COUNT(*) AS total FROM transaksi');
+    final result = await db.rawQuery('SELECT COUNT(*) AS total FROM transaksi WHERE user_id = ?', [userId]);
     return Sqflite.firstIntValue(result) ?? 0;
   }
 }

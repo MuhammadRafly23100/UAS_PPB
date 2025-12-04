@@ -5,8 +5,10 @@ import 'cart_manager.dart';
 import 'session_manager.dart';
 import 'models/user.dart' as UserModel; // Alias to avoid conflict with flutter User
 import 'models/produk.dart' as ProdukModel; // Import Produk model
-import 'profile.dart'; // Import ProfilePage
+import 'profile.dart'; // (masih ada kalau dibutuhkan)
+import 'home_page.dart'; // (masih ada kalau dibutuhkan)
 import 'db/db_helper.dart'; // Import DBHelper
+import 'order_history_page.dart'; // <-- TAMBAHKAN INI
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -17,15 +19,15 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   final UserModel.User _userModel = UserModel.User();
-  final ProdukModel.Produk _produkModel = ProdukModel.Produk(); // Initialize Produk model
+  final ProdukModel.Produk _produkModel = ProdukModel.Produk();
   Map<String, dynamic>? _currentUser;
   bool _isLoadingUser = true;
-  String _selectedPaymentMethod = 'QRIS'; // Default payment method
+  String _selectedPaymentMethod = 'QRIS';
   final TextEditingController _addressController = TextEditingController();
   final NumberFormat currencyFormat = NumberFormat("#,###", "id_ID");
-  final double shippingCost = 40000; // Fixed shipping cost
-  final double newCustomerDiscountRate = 0.20; // 20% discount for new users
-  final int maxDiscountTransactions = 2; // New user discount applies for the first 2 transactions
+  final double shippingCost = 40000;
+  final double newCustomerDiscountRate = 0.20; // 20%
+  final int maxDiscountTransactions = 2;
 
   @override
   void initState() {
@@ -34,9 +36,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _loadUserData() async {
-    setState(() {
-      _isLoadingUser = true;
-    });
+    setState(() => _isLoadingUser = true);
     try {
       final email = await SessionManager.getEmail();
       if (email != null) {
@@ -51,11 +51,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } catch (e) {
       debugPrint('Error loading user data: $e');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingUser = false;
-        });
-      }
+      if (mounted) setState(() => _isLoadingUser = false);
     }
   }
 
@@ -113,22 +109,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          const Text(
-                            'Order Summary',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
+                          const Text('Order Summary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
                           _buildOrderSummaryRow('Subtotal', subtotal),
                           _buildOrderSummaryRow('Shipping', shippingCost),
-                          if (discountAmount > 0) // Only show discount row if there's an active discount
+                          if (discountAmount > 0)
                             _buildOrderSummaryRow('Discount New User', -discountAmount, isDiscount: true),
                           const Divider(),
                           _buildOrderSummaryRow('Total', total, isTotal: true),
                           const SizedBox(height: 20),
-                          const Text(
-                            'Payment Method',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
+                          const Text('Payment Method', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
                           _buildPaymentMethodTile('QRIS', 'assets/images/logoQRIS.png'),
                           _buildPaymentMethodTile('GOPAY', 'assets/images/logoGOPAY.png'),
@@ -138,8 +128,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
-                                // Handle checkout logic here
-                                // For now, just show a confirmation dialog
                                 showDialog(
                                   context: context,
                                   builder: (BuildContext context) {
@@ -150,7 +138,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            Text("Terima kasih atas pesanan Anda, ${_currentUser!['nama']}!"),
+                                            Text("Terima kasih atas pesanan Anda, ${_currentUser?['nama'] ?? 'Pengguna'}!"),
                                             const SizedBox(height: 10),
                                             const Text('Rincian Pesanan:', style: TextStyle(fontWeight: FontWeight.bold)),
                                             ...cartManager.items.map((item) => Text(
@@ -173,11 +161,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                                   const Text('Silakan scan QRIS di bawah ini:'),
                                                   const SizedBox(height: 5),
                                                   Center(
-                                                    child: Image.asset(
-                                                      'assets/images/logoQRIS.png', // Placeholder for QRIS image
-                                                      width: 150,
-                                                      height: 150,
-                                                    ),
+                                                    child: Image.asset('assets/images/logoQRIS.png', width: 150, height: 150),
                                                   ),
                                                 ],
                                               )
@@ -189,67 +173,118 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                       actions: <Widget>[
                                         TextButton(
                                           child: const Text("Batal"),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
+                                          onPressed: () => Navigator.of(context).pop(),
                                         ),
                                         TextButton(
                                           child: const Text("Konfirmasi"),
                                           onPressed: () async {
-                                            Navigator.of(context).pop(); // Close confirmation dialog
+                                            Navigator.of(context).pop(); // close dialog
 
-                                            // Save transaction to database
+                                            if (_currentUser == null) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text("Gagal menempatkan pesanan: Data pengguna tidak ditemukan.")),
+                                              );
+                                              return;
+                                            }
+
+                                            // Save transaction
                                             final dbHelper = DBHelper();
                                             final int? userId = _currentUser!['user_id'];
-                                            if (userId != null) {
-                                              final transactionId = await dbHelper.insertTransaction({
+                                            if (userId == null) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text("Gagal menempatkan pesanan: User ID tidak ditemukan.")),
+                                              );
+                                              return;
+                                            }
+
+                                            debugPrint('DEBUG: User ID for transaction: $userId');
+
+                                            int transactionId = -1;
+                                            try {
+                                              transactionId = await dbHelper.insertTransaction({
                                                 'user_id': userId,
                                                 'total': total,
                                                 'shipping_cost': shippingCost,
                                                 'discount_amount': discountAmount,
                                                 'payment_method': _selectedPaymentMethod,
                                                 'address': _addressController.text,
+                                                'status': 'Selesai', // tandai selesai
                                               });
-
-                                              // Save transaction details
-                                              if (transactionId > 0) {
-                                                List<Map<String, dynamic>> details = cartManager.items.map((item) => {
-                                                      'transaksi_id': transactionId,
-                                                      'produk_id': item.produkId,
-                                                      'nama_produk': item.nama,
-                                                      'harga': item.harga,
-                                                      'qty': item.qty,
-                                                    }).toList();
-                                                await dbHelper.insertTransactionDetails(details);
-                                              }
+                                              debugPrint('DEBUG: Transaction inserted with ID: $transactionId');
+                                            } catch (e) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text("Gagal menyimpan transaksi. Error: $e")),
+                                              );
+                                              debugPrint('ERROR: Failed to insert transaction: $e');
+                                              return;
                                             }
 
-                                            // Update stock for each item in the cart
-                                            for (var item in cartManager.items) {
-                                              final currentProduct = await _produkModel.getProdukById(item.produkId);
-                                              if (currentProduct.isNotEmpty) {
-                                                int currentStock = (currentProduct['stok'] as num).toInt();
-                                                int newStock = currentStock - item.qty;
-                                                await _produkModel.updateProdukStock(item.produkId, newStock);
-                                              }
+                                            if (transactionId <= 0) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text("Gagal menyimpan transaksi.")),
+                                              );
+                                              debugPrint('ERROR: Transaction ID is not valid: $transactionId');
+                                              return;
                                             }
 
-                                            // Increment transaction count for the current user
-                                            if (_currentUser != null) {
-                                              int currentTransactionCount = (_currentUser!['transaction_count'] ?? 0);
-                                              await _userModel.updateTransactionCount(
-                                                  _currentUser!['user_id'], currentTransactionCount + 1);
-                                              // Reload user data to reflect the updated transaction count
+                                            // Save details
+                                            try {
+                                              final details = cartManager.items.map((item) => {
+                                                    'transaksi_id': transactionId,
+                                                    'produk_id': item.produkId,
+                                                    'nama_produk': item.nama,
+                                                    'harga': item.harga,
+                                                    'qty': item.qty,
+                                                  }).toList();
+                                              await dbHelper.insertTransactionDetails(details);
+                                              debugPrint('DEBUG: Transaction details inserted for transaction ID: $transactionId');
+                                            } catch (e) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text("Gagal menyimpan detail transaksi. Error: $e")),
+                                              );
+                                              debugPrint('ERROR: Failed to insert transaction details: $e');
+                                              return;
+                                            }
+
+                                            // Update stock
+                                            try {
+                                              for (var item in cartManager.items) {
+                                                final currentProduct = await _produkModel.getProdukById(item.produkId);
+                                                if (currentProduct.isNotEmpty) {
+                                                  final currentStock = (currentProduct['stok'] as num).toInt();
+                                                  final newStock = currentStock - item.qty;
+                                                  await _produkModel.updateProdukStock(item.produkId, newStock);
+                                                }
+                                              }
+                                            } catch (e) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text("Gagal memperbarui stok. Error: $e")),
+                                              );
+                                              return;
+                                            }
+
+                                            // Update user transaction_count
+                                            try {
+                                              final currentCount = (_currentUser!['transaction_count'] ?? 0);
+                                              await _userModel.updateTransactionCount(_currentUser!['user_id'], currentCount + 1);
                                               await _loadUserData();
+                                            } catch (e) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text("Gagal update jumlah transaksi user. Error: $e")),
+                                              );
+                                              return;
                                             }
 
-                                            cartManager.clearCart(); // Clear cart
+                                            // Bersihkan keranjang & pindah ke Riwayat
+                                            cartManager.clearCart();
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(content: Text("Pesanan berhasil ditempatkan!")),
                                             );
-                                            // Navigate to ProfilePage
-                                            Navigator.of(context).pushReplacement(
-                                              MaterialPageRoute(builder: (context) => const ProfilePage()),
+
+                                            if (!mounted) return;
+                                            Navigator.of(context).pushAndRemoveUntil(
+                                              MaterialPageRoute(builder: (_) => const OrderHistoryPage()),
+                                              (route) => route.isFirst,
                                             );
                                           },
                                         ),
@@ -263,10 +298,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 15),
                               ),
-                              child: const Text(
-                                'Place Order',
-                                style: TextStyle(fontSize: 18),
-                              ),
+                              child: const Text('Place Order', style: TextStyle(fontSize: 18)),
                             ),
                           ),
                         ],
@@ -285,10 +317,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: isTotal ? 20 : 16,
-              fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            ),
+            style: TextStyle(fontSize: isTotal ? 20 : 16, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal),
           ),
           Text(
             '${isDiscount ? '-' : ''}IDR ${currencyFormat.format(amount.abs())}${isDiscount ? ' (20%)' : ''}',
@@ -305,11 +334,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Widget _buildPaymentMethodTile(String method, String imagePath) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedPaymentMethod = method;
-        });
-      },
+      onTap: () => setState(() => _selectedPaymentMethod = method),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8.0),
         padding: const EdgeInsets.all(16.0),
@@ -323,16 +348,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ),
         child: Row(
           children: [
-            Image.asset(
-              imagePath,
-              width: 40,
-              height: 40,
-            ),
+            Image.asset(imagePath, width: 40, height: 40),
             const SizedBox(width: 16),
-            Text(
-              method,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            Text(method, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
