@@ -19,7 +19,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? userData;
   File? _avatarImage;
-  int _pendingShippingCount = 0;
+  int _orderHistoryCount = 0;
 
   @override
   void initState() {
@@ -30,20 +30,50 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadUserDataAndCounts() async {
     final prefs = await SharedPreferences.getInstance();
     String? emailPref = prefs.getString("email");
-    if (emailPref == null) return;
+    if (emailPref == null) {
+      debugPrint('ProfilePage: No email found in SharedPreferences.');
+      setState(() {
+        userData = null; // Explicitly set to null if no email, to show "User data not found" or similar
+      });
+      return;
+    }
 
-    final User _user = User();
-    final data = await _user.getUserByEmail(emailPref);
-    final pendingCount = await _user.getPendingShippingCount(data!['user_id']); // Call from _user instance
+    debugPrint('ProfilePage: Loading user data for email: $emailPref');
+    try {
+      final User _user = User();
+      final data = await _user.getUserByEmail(emailPref);
+      debugPrint('ProfilePage: User data fetched: $data');
 
-    setState(() {
-      userData = data;
-      _avatarImage = (userData?['avatar'] != null &&
-                userData!['avatar'].toString().isNotEmpty)
-          ? File(userData!['avatar'])
-          : null;
-      _pendingShippingCount = pendingCount;
-    });
+      final dbHelper = DBHelper();
+      final userId = data?['user_id'];
+      int orderCount = 0;
+      if (userId != null) {
+        final transactions = await dbHelper.getTransactionsByUserId(userId);
+        orderCount = transactions.length;
+        debugPrint('ProfilePage: Transactions count for user $userId: $orderCount');
+      } else {
+        debugPrint('ProfilePage: User ID is null, cannot fetch transactions.');
+      }
+
+      if (mounted) {
+        setState(() {
+          userData = data;
+          _avatarImage = (userData?['avatar'] != null &&
+                    userData!['avatar'].toString().isNotEmpty)
+              ? File(userData!['avatar'])
+              : null;
+          _orderHistoryCount = orderCount;
+        });
+        debugPrint('ProfilePage: User data and counts updated in state.');
+      }
+    } catch (e) {
+      debugPrint('ProfilePage: Error loading user data and counts: $e');
+      if (mounted) {
+        setState(() {
+          userData = null; // Set to null on error to show appropriate message
+        });
+      }
+    }
   }
 
   @override
@@ -89,30 +119,29 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Status Pesanan',
+                    'Riwayat Pesanan',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF2EDE5),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatusBox('Riwayat Pesanan', _pendingShippingCount, onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const OrderHistoryPage()),
-                        );
-                      }),
-                      _buildStatusBox('Pembatalan', 0), // Placeholder
-                      _buildStatusBox('Pengembalian', 0), // Placeholder
-                      _buildStatusBox('Rating', 4.7, isRating: true),
-                    ],
+                Card(
+                  elevation: 2,
+                  color: const Color(0xFFF2EDE5), // Set card background color to match fieldBox
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: ListTile(
+                    // tileColor: const Color(0xFFF2EDE5), // Removed as Card color handles it
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0xFF8D6E63), // Example color from image
+                      child: Icon(Icons.receipt, color: Colors.white), // Example icon from image
+                    ),
+                    title: const Text('Riwayat Pesanan'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OrderHistoryPage()),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -186,46 +215,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildStatusBox(String title, dynamic value, {bool isRating = false, VoidCallback? onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF8D6E63)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            isRating
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      Text(
-                        value.toString(),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  )
-                : Text(
-                    value.toString(),
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-            const SizedBox(height: 5),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget fieldLabel(String text) => Align(
         alignment: Alignment.centerLeft,

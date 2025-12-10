@@ -52,6 +52,16 @@ class Produk{
     );
   }
 
+  Future<List<Map<String, dynamic>>> searchProduk(String query) async {
+    final db = await _dbHelper.database;
+    return await db.query(
+      'produk',
+      where: 'nama_produk LIKE ?',
+      whereArgs: ['%$query%'],
+      orderBy: 'nama_produk ASC',
+    );
+  }
+
   Future<int> updateProdukStock(int produkId, int newStock) async {
     final db = await _dbHelper.database;
     return await db.update(

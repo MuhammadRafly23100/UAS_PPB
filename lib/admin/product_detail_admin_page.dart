@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'models/produk.dart';
+
 import 'dart:io';
 import 'package:provider/provider.dart';
-import 'cart_manager.dart';
+import '../models/produk.dart';
 
-class ProductDetailPage extends StatefulWidget {
+
+class ProductDetailAdminPage extends StatefulWidget {
   final int productId;
 
-  const ProductDetailPage({super.key, required this.productId});
+  const ProductDetailAdminPage({super.key, required this.productId});
 
   @override
-  State<ProductDetailPage> createState() => _ProductDetailPageState();
+  State<ProductDetailAdminPage> createState() => _ProductDetailAdminPageState();
 }
 
-class _ProductDetailPageState extends State<ProductDetailPage> {
+class _ProductDetailAdminPageState extends State<ProductDetailAdminPage> {
   final Produk _produk = Produk();
   Map<String, dynamic>? product;
   bool isLoading = true;
@@ -120,33 +121,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ],
                   ),
                 ),
-      floatingActionButton: product == null
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () {
-                final normalized = {
-                  'produk_id': (product!['produk_id'] as num).toInt(),
-                  'nama_produk': product!['nama_produk'].toString(),
-                  'harga': (product!['harga'] as num).toDouble(),
-                  'stok': (product!['stok'] as num).toInt(),
-                  'foto_produk': product!['foto_produk']?.toString() ?? 'assets/images/lainnya.jpg', // Ensure a default image is always passed
-                  'deskripsi': product!['deskripsi']?.toString(),
-                };
-
-                Provider.of<CartManager>(context, listen: false)
-                    .addItem(normalized);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          '${product!['nama_produk']} berhasil ditambahkan ke keranjang!')),
-                );
-              },
-              icon: const Icon(Icons.shopping_cart),
-              label: const Text('Add to Cart'),
-              backgroundColor: const Color(0xFF8D6E63),
-              foregroundColor: Colors.white,
-            ),
+      // Admin view: disable Add to Cart button to prevent admins from adding items
+      // to the shopping cart. Keep floatingActionButton null for admin pages.
+      floatingActionButton: null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

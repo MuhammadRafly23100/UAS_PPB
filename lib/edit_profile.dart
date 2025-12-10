@@ -69,8 +69,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("Success"),
-          content: const Text("Profile updated successfully!"),
+          title: const Text("Sukses"),
+          content: const Text("Profile berhasil diupdate!"),
           actions: [
             TextButton(
               onPressed: () {
@@ -88,7 +88,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("Error"),
-          content: Text("Failed to update profile: $e"),
+          content: Text("Gagal update profile: $e"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

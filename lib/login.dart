@@ -5,8 +5,8 @@ import 'models/user.dart';
 import 'register.dart';
 import 'session_manager.dart';
 import 'home_page.dart';
-import 'home_page_admin.dart';
-import 'forgot_pw.dart'; 
+import 'admin/home_page_admin.dart'; // Update import path
+import 'forgot_pw.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -152,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 },
                 child: const Text(
-                  'Forgot Password?',
+                  'Lupa Password?',
                   style: TextStyle(
                     color: Colors.brown,    
                     fontWeight: FontWeight.w600),
@@ -169,21 +169,21 @@ class _LoginPageState extends State<LoginPage> {
                   final password = _passwordController.text;
 
                   if (email.isEmpty || password.isEmpty) {
-                    _showDialog('Oops!', 'Please fill in both email and password');
+                    _showDialog('Oops!', 'Silahkan isi email dan password Anda.');
                     return;
                   }
 
                   final user = await _user.getUserByEmail(email);
                   if (user == null) {
-                    _showDialog('Oops!', 'This email is not registered yet. Please register first.');
+                    _showDialog('Oops!', 'Email tidak terdaftar. Silahkan Registrasi.');
                   } else if (user['password'] != password) {
-                    _showDialog('Oops!', 'Email or password is incorrect. Please check again.');
+                    _showDialog('Oops!', 'Email atau password salah. Silahkan cek kembali.');
                   } else {
                     await SessionManager.setLogin(true);
                     await SessionManager.setEmail(email);
                     await SessionManager.setUserId(user['user_id']); // Set user_id in SessionManager
 
-                    _showDialog('Success', 'You have successfully logged in, ${user['nama']}!');
+                    _showDialog('Login Sukses', 'Selamat datang, ${user['nama']}!');
 
                     Future.delayed(const Duration(seconds: 1), () {
                       if (user['role'] == 'mitra') {
@@ -208,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 child: const Text(
                   'Login',
-                  style: TextStyle(color: Colors.black),
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
             ),
@@ -228,7 +228,7 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const SizedBox(height: 50),
-                const Text("Don't have an account? "),
+                const Text("Belum punya akun? "),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(

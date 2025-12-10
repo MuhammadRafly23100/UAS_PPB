@@ -58,7 +58,8 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
         selectedKategoriId = produk['kategori_id'];
         namaController.text = produk['nama_produk'];
         deskripsiController.text = produk['deskripsi'];
-        hargaController.text = produk['harga'].toString();
+        // Ensure harga is stored as a clean number without formatting
+        hargaController.text = (produk['harga'] as num).toInt().toString();
         stokController.text = produk['stok'].toString();
         oldStok = produk['stok'];
         selectedFoto = File(produk['foto_produk']);
@@ -89,25 +90,39 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
     if (!_produkFormKey.currentState!.validate() || selectedKategoriId == null) return;
 
     if (selectedFoto == null) {
-      _showError('Please select a product photo');
+      _showError('Silakan pilih foto produk');
       return;
     }
 
-    double? harga = double.tryParse(
-        hargaController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+    // Parse price by removing all non-digit characters
+    String priceText = hargaController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    double? harga = double.tryParse(priceText);
     int? stok = int.tryParse(stokController.text);
 
     if (harga == null || stok == null) {
-      _showError('Invalid price or stock');
+      _showError('Harga atau stok tidak valid');
       return;
     }
 
     String? fotoProdukPath;
     if (selectedFoto != null) {
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName = p.basename(selectedFoto!.path);
-      final savedImage = await selectedFoto!.copy('${appDir.path}/$fileName');
-      fotoProdukPath = savedImage.path;
+      try {
+        final appDir = await getApplicationDocumentsDirectory();
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(selectedFoto!.path)}';
+        final destinationPath = '${appDir.path}/$fileName';
+        final savedImage = await selectedFoto!.copy(destinationPath);
+        fotoProdukPath = savedImage.path;
+        debugPrint('ManageProdukPage: Image saved to: $fotoProdukPath');
+        
+        // Verify file exists before saving to database
+        if (!await savedImage.exists()) {
+          _showError('Gagal menyimpan foto produk');
+          return;
+        }
+      } catch (e) {
+        _showError('Error menyimpan foto: $e');
+        return;
+      }
     }
 
     Map<String, dynamic> row = {
@@ -133,12 +148,12 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
         _resetForm();
         Navigator.pop(context, true);
         _showSuccess(isNew
-            ? 'Product successfully added'
-            : 'Product successfully updated');
+            ? 'Produk berhasil ditambahkan'
+            : 'Produk berhasil diperbarui');
       } else {
         _showError(isNew
-            ? 'Failed to add product'
-            : 'Failed to update product');
+            ? 'Gagal menambahkan produk'
+            : 'Gagal memperbarui produk');
       }
     } catch (e) {
       _showError('Error: $e');
@@ -166,7 +181,7 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(editingProdukId == null ? 'Add Product' : 'Edit Product'),
+        title: Text(editingProdukId == null ? 'Tambah Produk' : 'Edit Produk'),
         backgroundColor: const Color(0xFF8D6E63),
       ),
 
@@ -189,8 +204,8 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
                     );
                   }).toList(),
                   onChanged: (val) => setState(() => selectedKategoriId = val),
-                  decoration: const InputDecoration(labelText: 'Select Category'),
-                  validator: (val) => val == null ? 'Select category' : null,
+                  decoration: const InputDecoration(labelText: 'Pilih Kategori'),
+                  validator: (val) => val == null ? 'Pilih Kategori' : null,
                 ),
                 const SizedBox(height: 10),
 
@@ -212,7 +227,7 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: selectedFoto == null
-                            ? const Center(child: Text("No Image Selected"))
+                            ? const Center(child: Text("Tidak ada gambar"))
                             : ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.file(selectedFoto!, fit: BoxFit.cover),
@@ -227,7 +242,7 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
                           }
                         },
                         icon: const Icon(Icons.image),
-                        label: const Text("Choose Image"),
+                        label: const Text("Pilih Foto Produk"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF8D6E63),
                           foregroundColor: Colors.black,
@@ -241,26 +256,26 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
 
                 TextFormField(
                   controller: namaController,
-                  decoration: const InputDecoration(labelText: 'Product Name'),
+                  decoration: const InputDecoration(labelText: 'Nama Produk'),
                   validator: (val) =>
-                      val!.isEmpty ? 'Product Name must be filled' : null,
+                      val!.isEmpty ? 'Nama produk harus diisi!' : null,
                 ),
                 const SizedBox(height: 10),
 
                 TextFormField(
                   controller: deskripsiController,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                  decoration: const InputDecoration(labelText: 'Deskripsi'),
                   validator: (val) =>
-                      val!.isEmpty ? 'Description must be filled' : null,
+                      val!.isEmpty ? 'Deskripsi harus diisi!' : null,
                 ),
                 const SizedBox(height: 10),
 
                 TextFormField(
                   controller: hargaController,
-                  decoration: const InputDecoration(labelText: 'Price (Rp)'),
+                  decoration: const InputDecoration(labelText: 'Harga (Rp)'),
                   keyboardType: TextInputType.number,
                   validator: (val) =>
-                      val!.isEmpty ? 'Price must be filled' : null,
+                      val!.isEmpty ? 'Harga harus diisi!' : null,
                 ),
                 const SizedBox(height: 10),
 
@@ -285,7 +300,7 @@ class _ManageProdukPageState extends State<ManageProdukPage> {
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         validator: (val) =>
-                            val!.isEmpty ? 'Stock must be filled' : null,
+                            val!.isEmpty ? 'Stok harus diisi!' : null,
                       ),
                     ),
                     IconButton(

@@ -52,37 +52,37 @@ class _ForgotPwPageState extends State<ForgotPwPage> {
     final confirm = _confirmController.text.trim();
 
     if (email.isEmpty || password.isEmpty || confirm.isEmpty) {
-      _showDialog('Error!', 'Please fill all fields!');
+      _showDialog('Error!', 'Silahkan isi semua field!');
       return;
     }
 
     if (!_isEmailValid(email)) {
-      _showDialog('Error!', 'Email must be a valid Gmail address');
+      _showDialog('Error!', 'Email harus menggunakan @gmail.com');
       return;
     }
 
     if (!_isPasswordValid(password)) {
       _showDialog('Error!',
-          'Password must be at least 8 characters and include uppercase, lowercase, number, and special character');
+          'Password harus berisi setidaknya 8 karakter, termasuk huruf kapital, huruf kecil, angka, dan simbol khusus.');
       return;
     }
 
     if (password != confirm) {
-      _showDialog('Error', 'Password and confirmation do not match');
+      _showDialog('Error', 'Password dan konfirmasi tidak sesuai');
       return;
     }
 
     final user = await _user.getUserByEmail(email);
     if (user == null) {
-      _showDialog('Error', 'Email not registered');
+      _showDialog('Error', 'Email tidak terdaftar');
       return;
     }
 
     final res = await _user.updatePassword(email, password);
     if (res > 0) {
-      _showDialog('Success!', 'Password has been reset successfully', goBack: true);
+      _showDialog('Sukses!', 'Password sudah berhasil direset', goBack: true);
     } else {
-      _showDialog('Error', 'Failed to reset password');
+      _showDialog('Error', 'gagal reset password');
     }
   }
 
@@ -99,7 +99,7 @@ class _ForgotPwPageState extends State<ForgotPwPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Please enter your new password below',
+              'Masukkan email dan password baru Anda',
               style: TextStyle(fontSize: 15),
             ),
             const SizedBox(height: 30),
@@ -108,7 +108,7 @@ class _ForgotPwPageState extends State<ForgotPwPage> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                hintText: 'Enter your email address',
+                hintText: 'Masukkan Email Anda',
                 filled: true,
                 fillColor: Colors.grey[200],
                 border: OutlineInputBorder(
@@ -123,7 +123,7 @@ class _ForgotPwPageState extends State<ForgotPwPage> {
               controller: _passwordController,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
-                hintText: 'New Password',
+                hintText: 'Password baru',
                 filled: true,
                 fillColor: Colors.grey[200],
                 border: OutlineInputBorder(
@@ -148,7 +148,7 @@ class _ForgotPwPageState extends State<ForgotPwPage> {
               controller: _confirmController,
               obscureText: _obscureConfirm,
               decoration: InputDecoration(
-                hintText: 'Confirm Password',
+                hintText: 'Konfirmasi Password',
                 filled: true,
                 fillColor: Colors.grey[200],
                 border: OutlineInputBorder(

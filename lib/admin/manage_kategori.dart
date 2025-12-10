@@ -92,10 +92,10 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
         _loadKategori();
         Navigator.pop(context);
         _showSuccess(
-            isNew ? 'Category successfully added' : 'Category successfully updated');
+            isNew ? 'Kategori berhasil ditambahkan' : 'Kategori berhasil diperbarui');
       } else {
         _showError(
-            isNew ? 'Failed to add category' : 'Failed to update category');
+            isNew ? 'Gagal menambahkan kategori' : 'Gagal memperbarui kategori');
       }
     } catch (e) {
       _showError('Error: $e');
@@ -111,7 +111,7 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
               borderRadius: BorderRadius.circular(16),
             ),
             title: const Text('Confirm Delete'),
-            content: const Text('Are you sure you want to delete this category?'),
+            content: const Text('Apakah kamu yakin ingin menghapus kategori ini?'),
             actions: [
               TextButton(
                   style: TextButton.styleFrom(foregroundColor: Colors.black),
@@ -136,9 +136,9 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
       int result = await _kategori.deleteKategori(id);
       if (result > 0) {
         _loadKategori();
-        _showSuccess('Category successfully deleted');
+        _showSuccess('Kategori berhasil dihapus');
       } else {
-        _showError('Failed to delete category');
+        _showError('Gagal menghapus kategori');
       }
     } catch (e) {
       _showError('Error: $e');
@@ -164,7 +164,7 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: Text(editingKategoriId == null ? 'Add Category' : 'Edit Category'),
+          title: Text(editingKategoriId == null ? 'Tambah Kategori' : 'Edit Kategori'),
           content: SingleChildScrollView(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom + 16,
@@ -182,7 +182,7 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: imagePath == null
-                        ? const Center(child: Text("No Image Selected"))
+                        ? const Center(child: Text("Tidak ada gambar"))
                         : ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.file(File(imagePath!), fit: BoxFit.cover),
@@ -201,16 +201,16 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
                   const SizedBox(height: 15),
                   TextFormField(
                     controller: namaController,
-                    decoration: const InputDecoration(labelText: 'Category Name'),
+                    decoration: const InputDecoration(labelText: 'Nama Kategori'),
                     validator: (val) =>
-                        val!.isEmpty ? 'Category Name must be filled' : null,
+                        val!.isEmpty ? 'Nama kategori harus diisi!' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: descController,
-                    decoration: const InputDecoration(labelText: 'Description'),
+                    decoration: const InputDecoration(labelText: 'Deskripsi'),
                     validator: (val) =>
-                        val!.isEmpty ? 'Description must be filled' : null,
+                        val!.isEmpty ? 'Deskripsi harus diisi!' : null,
                   ),
                 ],
               ),
@@ -311,13 +311,13 @@ class _ManageKategoriPageState extends State<ManageKategoriPage>
                     _resetForm();
                     _showFormDialog();
                   },
-                  child: const Text('Add Category'),
+                  child: const Text('Tambah Kategori'),
                 ),
               ),
               const SizedBox(height: 20),
               Expanded(
                 child: kategoriList.isEmpty
-                    ? const Center(child: Text('No categories yet'))
+                    ? const Center(child: Text('Tidak ada kategori tersedia.'))
                     : ListView.builder(
                         itemCount: kategoriList.length,
                         itemBuilder: (context, index) {

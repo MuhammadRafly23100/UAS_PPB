@@ -173,25 +173,25 @@ class _RegisterPageState extends State<RegisterPage> {
                       password.isEmpty ||
                       noTelp.isEmpty ||
                       alamat.isEmpty) {
-                    _showDialog('Error', 'All fields are required');
+                    _showDialog('Error', 'Semua field harus diisi');
                     return;
                   }
 
                   if (!RegExp(r'^[\w-\.]+@gmail\.com$').hasMatch(email)) {
-                    _showDialog('Error', 'Email must use @gmail.com');
+                    _showDialog('Error', 'Email harus menggunakan @gmail.com');
                     return;
                   }
 
                   if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$')
                       .hasMatch(password)) {
                     _showDialog('Error',
-                        'Password must be at least 8 characters, containing uppercase letters, lowercase letters, numbers, symbols');
+                        'Password harus berisi setidaknya 8 karakter, termasuk huruf kapital, huruf kecil, angka, dan simbol khusus.');
                     return;
                   }
 
                   final existingUser = await _user.getUserByEmail(email);
                   if (existingUser != null) {
-                    _showDialog('Error', 'Email already registered');
+                    _showDialog('Error', 'Email sudah terdaftar');
                     return;
                   }
 
@@ -205,13 +205,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   );
 
                   if (res != -1) {
-                    _showDialog('Success', 'Register successful, please login');
+                    _showDialog('Sukses', 'Registrasi sukses! Silahkan login.');
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(builder: (_) => const LoginPage()),
                     );
                   } else {
-                    _showDialog('Error', 'Failed to register user');
+                    _showDialog('Error', 'Registrasi gagal, silahkan coba lagi');
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -233,7 +233,7 @@ class _RegisterPageState extends State<RegisterPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Already have an account? '),
+                const Text('Sudah punya akun? '),
                 GestureDetector(
                   onTap: () {
                     Navigator.pushReplacement(
@@ -242,7 +242,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     );
                   },
                   child: const Text(
-                    'Log in',
+                    'Login',
                     style: TextStyle(
                       color: Colors.blue,
                       fontWeight: FontWeight.bold,

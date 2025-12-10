@@ -56,7 +56,7 @@ class _ManagePageState extends State<ManagePage> {
           borderRadius: BorderRadius.circular(16),
         ),
         title: const Text('Confirm Delete'),
-        content: const Text('Are you sure you want to delete this product?'),
+        content: const Text('Apakah Anda yakin ingin menghapus produk ini?'),
         actions: [
           TextButton(
             style: ElevatedButton.styleFrom(
@@ -89,10 +89,6 @@ class _ManagePageState extends State<ManagePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Manage Produk & Kategori'),
-        backgroundColor: const Color(0xFF8D6E63),
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

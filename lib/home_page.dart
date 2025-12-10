@@ -4,22 +4,22 @@ import 'models/kategori.dart';
 import 'models/produk.dart';
 import 'profile.dart';
 import 'search.dart';
-import 'cart_manager.dart'; // Updated import from cart.dart
+import 'cart.dart';
 import 'dart:io';
 import 'session_manager.dart';
 import 'product_detail_page.dart'; // Import the new product detail page
 import 'category_products_page.dart'; // Import the category products page
+import 'explore_page.dart'; // Import the new ExplorePage
 
 class HomePage extends StatefulWidget {
-  final int initialIndex;
-  const HomePage({super.key, this.initialIndex = 0});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  late int _currentIndex;
+  int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   final Produk _produk = Produk();
   final Kategori _kategori = Kategori();
@@ -27,16 +27,15 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> categories = [];
   List<Map<String, dynamic>> featuredProducts = [];
 
-  final List<Map<String, dynamic>> testimonials = [
-    {"name": "Aulia", "rating": 5, "comment": "Kualitas produk sangat bagus! Pengiriman cepat."},
-    {"name": "Reno", "rating": 4, "comment": "Craft-nya rapi dan sesuai gambar. Recommended!"},
-    {"name": "Mira", "rating": 5, "comment": "Suka banget! Handmade-nya keliatan premium."},
+  final List<String> _testimonialImages = [
+    'assets/images/1.png',
+    'assets/images/2.png',
+    'assets/images/3.png',
   ];
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
     checkSession();
     loadCategories();
     loadFeaturedProducts();
@@ -131,7 +130,7 @@ class _HomePageState extends State<HomePage> {
           index: _currentIndex,
           children: [
             homeContent(),
-            const Center(child: Text("Explore")),
+            const ExplorePage(), // Use the new ExplorePage
             CartPage(),
             const ProfilePage(),
           ],
@@ -311,37 +310,40 @@ class _HomePageState extends State<HomePage> {
                   },
                 ),
           const SizedBox(height: 28),
-          const Text('Testimonials', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
+          const Text('Promo', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          CarouselSlider.builder(
-            itemCount: testimonials.length,
-            itemBuilder: (context, index, _) {
-              final t = testimonials[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                margin: const EdgeInsets.symmetric(horizontal: 6),
-                decoration: BoxDecoration(
-                  color: Colors.brown[50],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(t['name'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: List.generate(
-                        5,
-                        (i) => Icon(i < t['rating'] ? Icons.star : Icons.star_border, color: Colors.orange, size: 16),
+          CarouselSlider(
+            items: _testimonialImages.map((imagePath) {
+              return Builder(
+                builder: (BuildContext context) {
+                  return Container(
+                    width: MediaQuery.of(context).size.width,
+                    margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        imagePath,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(t['comment'], style: TextStyle(fontSize: 14, color: Colors.grey[800])),
-                  ],
-                ),
+                  );
+                },
               );
-            },
-            options: CarouselOptions(height: 160, enlargeCenterPage: true, autoPlay: true),
+            }).toList(),
+            options: CarouselOptions(
+              height: 200, // Adjust height as needed
+              autoPlay: true,
+              enlargeCenterPage: true,
+              aspectRatio: 16/9,
+              autoPlayCurve: Curves.fastOutSlowIn,
+              enableInfiniteScroll: true,
+              autoPlayAnimationDuration: const Duration(milliseconds: 800),
+              viewportFraction: 0.8,
+            ),
           ),
           const SizedBox(height: 40),
         ],
